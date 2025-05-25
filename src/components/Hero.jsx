@@ -596,7 +596,7 @@ export default function Hero() {
       /* Media query para pantallas más grandes */
       @media (min-width: 768px) {
         .name-neon-text {
-          font-size: 3rem; /* Tamaño un poco más grande en desktop */
+          font-size: 2.7rem; /* Tamaño un poco más grande en desktop */
         }
       }
 
