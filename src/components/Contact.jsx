@@ -26,7 +26,7 @@ export default function Contact() {
   }
 
   const handleWhatsAppClick = () => {
-    const phoneNumber = "5190050780" // Número sin espacios ni símbolos
+    const phoneNumber = "51900507780"
     const message = "Hola! Me interesa contactarte para hablar sobre un proyecto."
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
