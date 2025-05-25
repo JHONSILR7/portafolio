@@ -46,9 +46,9 @@ export default function Skills() {
           icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg",
           color: "from-purple-600 to-purple-800"
         },
-        { 
-          name: "Tailwind", 
-          icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-plain.svg", 
+        {
+          name: "Tailwind",
+          icon: "https://unpkg.com/simple-icons@v11/icons/tailwindcss.svg",
           color: "from-teal-400 to-cyan-500"
         }
       ]

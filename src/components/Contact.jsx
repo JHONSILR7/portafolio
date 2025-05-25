@@ -44,7 +44,7 @@ export default function Contact() {
     {
       icon: "💬",
       title: "WhatsApp",
-      value: "+51 900 50780",
+      value: "+51 900 507 780",
       description: "Disponible de 9am - 6pm",
       action: handleWhatsAppClick,
       gradient: "from-green-500 to-emerald-500"
