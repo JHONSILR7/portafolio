@@ -108,11 +108,6 @@ export default function Skills() {
           color: "from-orange-500 to-red-600"
         },
         { 
-          name: "Docker", 
-          icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", 
-          color: "from-blue-400 to-blue-600"
-        },
-        { 
           name: "VS Code", 
           icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg", 
           color: "from-blue-500 to-indigo-600"

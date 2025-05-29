@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '@/styles/hero.css';
+import InteractiveBackground from './Inter';
 
 export default function Hero() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -9,8 +11,9 @@ export default function Hero() {
   const particlesRef = useRef([]);
   const cursorTrailRef = useRef([]);
   const mouseTimeoutRef = useRef(null);
+  const cursorRef = useRef(null);
+  const rafId = useRef(null);
 
-  // Iconos para las tecnologías
   const techStack = [
     { name: 'React', icon: '⚛️' },
     { name: 'Node.js', icon: '🟢' },
@@ -44,13 +47,27 @@ export default function Hero() {
     };
   }, []);
 
+  // Función para actualizar la posición del cursor de forma suave
+  const updateCursorPosition = (targetX, targetY) => {
+    if (cursorRef.current) {
+      cursorRef.current.style.transform = `translate(${targetX}px, ${targetY}px)`;
+    }
+  };
+
   useEffect(() => {
     if (!isClient) return;
     
     const handleMouseMove = (e) => {
-      const newPos = { x: e.clientX, y: e.clientY };
+      const newPos = { 
+        x: e.clientX, 
+        y: e.clientY 
+      };
+      
       setMousePos(newPos);
       setIsMouseMoving(true);
+      
+      // Actualizar inmediatamente la posición del cursor
+      updateCursorPosition(newPos.x, newPos.y);
       
       // Clear timeout para detectar cuando para el movimiento
       if (mouseTimeoutRef.current) {
@@ -66,15 +83,21 @@ export default function Hero() {
         const trail = document.createElement('div');
         const size = 4 + (Date.now() % 6);
         
-        trail.className = 'fixed rounded-full pointer-events-none z-45';
-        trail.style.width = `${size}px`;
-        trail.style.height = `${size}px`;
-        trail.style.left = `${e.clientX}px`;
-        trail.style.top = `${e.clientY}px`;
-        trail.style.background = 'radial-gradient(circle, rgba(56, 182, 255, 0.8) 0%, rgba(138, 99, 210, 0.4) 70%, transparent 100%)';
-        trail.style.transform = 'translate(-50%, -50%)';
-        trail.style.animation = 'trail-fade 0.6s forwards';
-        trail.style.boxShadow = '0 0 10px rgba(56, 182, 255, 0.6)';
+        trail.className = 'cursor-trail';
+        trail.style.cssText = `
+          position: fixed;
+          width: ${size}px;
+          height: ${size}px;
+          left: ${newPos.x}px;
+          top: ${newPos.y}px;
+          background: radial-gradient(circle, rgba(56, 182, 255, 0.8) 0%, rgba(138, 99, 210, 0.4) 70%, transparent 100%);
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 45;
+          box-shadow: 0 0 10px rgba(56, 182, 255, 0.6);
+          animation: trail-fade 0.6s forwards;
+        `;
         
         document.body.appendChild(trail);
         cursorTrailRef.current.push(trail);
@@ -100,15 +123,21 @@ export default function Hero() {
         ];
         const randomColor = colors[Date.now() % colors.length];
         
-        particle.className = 'fixed rounded-full pointer-events-none z-40';
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${e.clientX + ((Date.now() % 60) - 30)}px`;
-        particle.style.top = `${e.clientY + ((Date.now() % 60) - 30)}px`;
-        particle.style.background = `radial-gradient(circle, ${randomColor} 0%, transparent 70%)`;
-        particle.style.boxShadow = `0 0 20px ${randomColor}`;
-        particle.style.transform = 'translate(-50%, -50%)';
-        particle.style.animation = `cosmic-drift ${0.8 + (Date.now() % 10) / 10}s forwards`;
+        particle.className = 'cursor-particle';
+        particle.style.cssText = `
+          position: fixed;
+          width: ${size}px;
+          height: ${size}px;
+          left: ${newPos.x + ((Date.now() % 60) - 30)}px;
+          top: ${newPos.y + ((Date.now() % 60) - 30)}px;
+          background: radial-gradient(circle, ${randomColor} 0%, transparent 70%);
+          box-shadow: 0 0 20px ${randomColor};
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 40;
+          animation: cosmic-drift ${0.8 + (Date.now() % 10) / 10}s forwards;
+        `;
         
         document.body.appendChild(particle);
         particlesRef.current.push(particle);
@@ -122,11 +151,15 @@ export default function Hero() {
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       if (mouseTimeoutRef.current) {
         clearTimeout(mouseTimeoutRef.current);
+      }
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
       }
     };
   }, [isClient]);
@@ -134,20 +167,23 @@ export default function Hero() {
   return (
     <section id="inicio" className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden flex items-center">
       
-      {/* Cursor Principal Épico */}
+      {/* Cursor Principal Épico Mejorado */}
       <div 
+        ref={cursorRef}
         className={`fixed pointer-events-none z-50 ${isMouseMoving ? 'scale-110' : 'scale-100'}`}
         style={{
-          left: `${mousePos.x}px`,
-          top: `${mousePos.y}px`,
-          transform: 'translate(-50%, -50%)',
+          left: 0,
+          top: 0,
+          transform: `translate(${mousePos.x}px, ${mousePos.y}px)`,
           transition: 'scale 0.1s ease-out',
+          willChange: 'transform'
         }}
       >
         {/* Núcleo del cursor */}
         <div 
-          className="w-4 h-4 rounded-full"
+          className="w-4 h-4 rounded-full absolute top-1/2 left-1/2"
           style={{
+            transform: 'translate(-50%, -50%)',
             background: 'radial-gradient(circle, rgba(56, 182, 255, 1) 0%, rgba(138, 99, 210, 0.8) 50%, transparent 100%)',
             boxShadow: `
               0 0 20px rgba(56, 182, 255, 0.8),
@@ -160,7 +196,7 @@ export default function Hero() {
         
         {/* Anillo exterior pulsante */}
         <div 
-          className={`absolute top-1/2 left-1/2 rounded-full border-2 transition-all duration-300 ${
+          className={`absolute top-1/2 left-1/2 rounded-full border-2 transition-all duration-200 ${
             isMouseMoving ? 'border-cyan-300' : 'border-cyan-400'
           }`}
           style={{
@@ -196,154 +232,10 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Nuevos elementos 3D elegantes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Esfera holográfica */}
-        <div className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full bg-gradient-to-br from-cyan-400/10 to-purple-600/10 animate-float-4">
-          <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-spin-slow"></div>
-          <div className="absolute inset-4 rounded-full border border-purple-400/30 animate-spin-slow-reverse"></div>
-          <div className="absolute inset-8 rounded-full border border-pink-400/30 animate-spin-slow"></div>
-        </div>
-
-        {/* Toroide metálico */}
-        <div className="absolute bottom-1/3 right-1/4 w-48 h-48 animate-float-5">
-          <div className="torus-metal">
-            <div className="torus-metal-ring"></div>
-          </div>
-        </div>
-
-        {/* Estructura cristalina */}
-        <div className="absolute top-1/3 right-1/3 crystal-structure animate-float-6">
-          <div className="crystal-beam beam-1"></div>
-          <div className="crystal-beam beam-2"></div>
-          <div className="crystal-beam beam-3"></div>
-          <div className="crystal-core"></div>
-        </div>
-
-        {/* Geometric 3D Shapes */}
-        <div className="absolute top-20 left-20 geometric-cube animate-float-1">
-          <div className="cube">
-            <div className="face front"></div>
-            <div className="face back"></div>
-            <div className="face right"></div>
-            <div className="face left"></div>
-            <div className="face top"></div>
-            <div className="face bottom"></div>
-          </div>
-        </div>
-
-        <div className="absolute top-40 right-32 geometric-pyramid animate-float-2">
-          <div className="pyramid">
-            <div className="pyramid-face pyramid-front"></div>
-            <div className="pyramid-face pyramid-right"></div>
-            <div className="pyramid-face pyramid-back"></div>
-            <div className="pyramid-face pyramid-left"></div>
-            <div className="pyramid-face pyramid-bottom"></div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-32 left-40 geometric-octahedron animate-float-3">
-          <div className="octahedron">
-            <div className="oct-face oct-1"></div>
-            <div className="oct-face oct-2"></div>
-            <div className="oct-face oct-3"></div>
-            <div className="oct-face oct-4"></div>
-            <div className="oct-face oct-5"></div>
-            <div className="oct-face oct-6"></div>
-            <div className="oct-face oct-7"></div>
-            <div className="oct-face oct-8"></div>
-          </div>
-        </div>
-
-        {/* Torus Ring */}
-        <div className="absolute top-1/2 right-20 transform -translate-y-1/2">
-          <div className="torus-ring animate-spin-y">
-            <div className="torus-outer">
-              <div className="torus-inner"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* DNA Helix Structure */}
-        <div className="absolute bottom-20 right-40 dna-helix">
-          <div className="helix-strand helix-1 animate-helix-rotate"></div>
-          <div className="helix-strand helix-2 animate-helix-rotate-reverse"></div>
-        </div>
-      </div>
-
-      {/* Animated Mesh Background */}
-      <div className="absolute inset-0 opacity-20">
-        <svg width="100%" height="100%" className="absolute inset-0">
-          <defs>
-            <linearGradient id="meshGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.1" />
-            </linearGradient>
-            <linearGradient id="meshGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#EC4899" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
-          
-          <g>
-            {[...Array(12)].map((_, i) => (
-              <path
-                key={i}
-                d={`M ${(mousePos.x * 0.1 + i * 120) % windowDimensions.width} 0 
-                   Q ${(mousePos.x * 0.05 + i * 80) % windowDimensions.width} ${windowDimensions.height / 2} 
-                     ${(mousePos.x * 0.1 + i * 120 + 100) % windowDimensions.width} ${windowDimensions.height}`}
-                stroke="url(#meshGradient1)"
-                strokeWidth="1"
-                fill="none"
-                className="animate-pulse"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
-            
-            {[...Array(8)].map((_, i) => (
-              <path
-                key={`h-${i}`}
-                d={`M 0 ${(mousePos.y * 0.1 + i * 80) % windowDimensions.height}
-                   Q ${windowDimensions.width / 2} ${(mousePos.y * 0.05 + i * 60) % windowDimensions.height}
-                     ${windowDimensions.width} ${(mousePos.y * 0.1 + i * 80 + 50) % windowDimensions.height}`}
-                stroke="url(#meshGradient2)"
-                strokeWidth="1"
-                fill="none"
-                className="animate-pulse"
-                style={{ animationDelay: `${i * 0.3}s` }}
-              />
-            ))}
-          </g>
-        </svg>
-      </div>
-
-      {/* Interactive Floating Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute w-80 h-80 bg-gradient-to-r from-blue-400/15 to-purple-400/15 rounded-full blur-3xl animate-pulse transition-all duration-300"
-          style={{
-            left: `${mousePos.x * 0.03}px`,
-            top: `${mousePos.y * 0.03}px`,
-            transform: 'translate(-50%, -50%)'
-          }}
-        />
-        
-        <div 
-          className="absolute w-64 h-64 bg-gradient-to-r from-pink-400/10 to-yellow-400/10 rounded-full blur-2xl animate-pulse delay-300"
-          style={{
-            right: `${(windowDimensions.width - mousePos.x) * 0.02}px`,
-            top: `${mousePos.y * 0.01 + 100}px`,
-          }}
-        />
-        
-        <div 
-          className="absolute w-96 h-96 bg-gradient-to-r from-cyan-400/12 to-blue-400/12 rounded-full blur-3xl animate-pulse delay-700"
-          style={{
-            left: `${mousePos.x * 0.01}px`,
-            bottom: `${(windowDimensions.height - mousePos.y) * 0.02}px`,
-          }}
-        />
-      </div>
+      <InteractiveBackground 
+        mousePos={mousePos} 
+        windowDimensions={windowDimensions} 
+      />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
@@ -353,19 +245,16 @@ export default function Hero() {
             isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
           }`}>
             
-            {/* Badge mejorado */}
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 backdrop-blur-lg border border-white/20 rounded-full px-4 py-2 mb-6 shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-300">
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-white/90 text-sm font-semibold tracking-wide">DISPONIBLE PARA PROYECTOS</span>
             </div>
 
-            {/* Nombre con nuevos estilos épicos */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
-              <span className="text-gray-300">Hola, soy</span>{' '}
+              <span className="text-gray-200">Hola, soy</span>{' '}
               <div className="relative inline-block mt-2">
-                {/* Efecto de texto neón 3D */}
                 <div className="name-neon-3d">
-                  <span className="name-neon-text">Jhon Danny Silvera Rojas </span>
+                  <span className="name-neon-text">JHON DANNY SILVERA ROJAS</span>
                   <span className="name-neon-glow"></span>
                   <span className="name-neon-reflection"></span>
                 </div>
@@ -376,12 +265,26 @@ export default function Hero() {
             </h1>
             
             <div className="space-y-3 mb-6">
-              <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Desarrollador Full Stack
-              </p>
+              {/* Título mejorado y más destacado */}
+              <div className="relative">
+                <p className="text-xl sm:text-2xl lg:text-3xl font-black bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent relative z-10">
+                  Estudiante de Ingeniería de Sistemas
+                </p>
+                
+                {/* Efectos de resplandor para el título */}
+                <div className="absolute inset-0 text-xl sm:text-2xl lg:text-3xl font-black text-cyan-400/20 blur-sm">
+                  Estudiante de Ingeniería de Sistemas
+                </div>
+                <div className="absolute inset-0 text-xl sm:text-2xl lg:text-3xl font-black text-blue-400/20 blur-md">
+                  Estudiante de Ingeniería de Sistemas
+                </div>
+                
+                {/* Línea decorativa debajo */}
+                <div className="w-24 h-1 bg-gradient-to-r from-cyan-400 to-purple-400 mx-auto lg:mx-0 mt-2 rounded-full shadow-lg shadow-cyan-400/50"></div>
+              </div>
               
               <p className="text-base text-gray-300 max-w-xl leading-relaxed lg:mx-0 mx-auto">
-                Estudiante de Ingeniería de Sistemas en 7mo ciclo. Especializado en crear experiencias digitales 
+                Especializado en crear experiencias digitales 
                 excepcionales mediante código limpio, arquitecturas escalables y las últimas tecnologías.
               </p>
             </div>
@@ -415,7 +318,6 @@ export default function Hero() {
             </div>
           </div>
           
-          {/* Contenedor para tu foto */}
           <div className={`flex-shrink-0 transition-all duration-1000 delay-300 ${
             isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
           }`}>
@@ -492,586 +394,36 @@ export default function Hero() {
         </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+      <style jsx>{`
+        @keyframes trail-fade {
+          0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
         }
-        
-        @keyframes spin-slow-reverse {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(-360deg); }
-        }
-        
-        .animate-spin-slow {
-          animation: spin-slow 20s linear infinite;
-        }
-        
-        .animate-spin-slow-reverse {
-          animation: spin-slow-reverse 20s linear infinite;
-        }
-        
-        @keyframes cursor-pulse {
-          0% { 
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.8;
-          }
-          50% { 
-            transform: translate(-50%, -50%) scale(1.1);
+
+        @keyframes cosmic-drift {
+          0% {
             opacity: 1;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
           }
-          100% { 
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.8;
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2) rotate(360deg);
           }
         }
-        
+
+        @keyframes cursor-pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+        }
+
         @keyframes cursor-rotate {
           from { transform: translate(-50%, -50%) rotate(0deg); }
           to { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        
-        @keyframes trail-fade {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.8;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(0.1);
-            opacity: 0;
-          }
-        }
-        
-        @keyframes cosmic-drift {
-          0% {
-            transform: translate(-50%, -50%) scale(1) rotate(0deg);
-            opacity: 1;
-          }
-          50% {
-            transform: translate(
-              calc(-50% + 25px),
-              calc(-50% + 25px)
-            ) scale(1.2) rotate(180deg);
-            opacity: 0.6;
-          }
-          100% {
-            transform: translate(
-              calc(-50% + 50px),
-              calc(-50% + 50px)
-            ) scale(0.1) rotate(360deg);
-            opacity: 0;
-          }
-        }
 
-        /* Estilos para el nombre neón 3D */
-        .name-neon-3d {
-        position: relative;
-        display: inline-block;
-        transform-style: preserve-3d;
-        perspective: 1000px;
-        font-size: 0.1em; /* Reducir tamaño general */
-      }
-
-      .name-neon-text {
-        position: relative;
-        display: inline-block;
-        font-weight: 900;
-        color: #fff;
-        font-size: 4.5rem; /* Tamaño más pequeño para móviles */
-        text-shadow: 
-          0 0 5px rgba(56, 182, 255, 0.8),
-          0 0 15px rgba(56, 182, 255, 0.6),
-          0 0 30px rgba(56, 182, 255, 0.4),
-          0 0 60px rgba(138, 99, 210, 0.3);
-        transform: translateZ(20px);
-        z-index: 3;
-        letter-spacing: 1px;
-        background: linear-gradient(90deg, #fff, #d1d5db);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: neon-flicker 3s infinite alternate;
-      }
-
-      /* Media query para pantallas más grandes */
-      @media (min-width: 768px) {
-        .name-neon-text {
-          font-size: 2.7rem; /* Tamaño un poco más grande en desktop */
-        }
-      }
-
-      .name-neon-glow {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, 
-          rgba(56, 182, 255, 0.3) 0%, 
-          rgba(138, 99, 210, 0.4) 50%, 
-          rgba(236, 72, 153, 0.3) 100%);
-        border-radius: 0.5rem;
-        filter: blur(10px); /* Reducir blur para tamaño más pequeño */
-        transform: translateZ(10px);
-        z-index: 2;
-        opacity: 0.8;
-      }
-
-      .name-neon-reflection {
-        position: absolute;
-        top: -5%; /* Ajustar para tamaño más pequeño */
-        left: -5%;
-        width: 110%; /* Ajustar proporción */
-        height: 110%;
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.1) 0%,
-          rgba(255, 255, 255, 0) 50%,
-          rgba(255, 255, 255, 0.1) 100%
-        );
-        transform: translateZ(5px) rotateX(60deg) rotateZ(45deg);
-        z-index: 4;
-        pointer-events: none;
-      }
-        
-        .name-energy-particles {
-          background: radial-gradient(
-            circle at center,
-            rgba(56, 182, 255, 0.3) 0%,
-            transparent 70%
-          );
-          z-index: 1;
-          pointer-events: none;
-        }
-        
-        .name-energy-particles::before,
-        .name-energy-particles::after {
-          content: '';
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          background: radial-gradient(
-            circle at center,
-            rgba(138, 99, 210, 0.3) 0%,
-            transparent 70%
-          );
-          animation: energy-pulse 4s infinite ease-in-out;
-        }
-        
-        .name-energy-particles::after {
-          background: radial-gradient(
-            circle at center,
-            rgba(236, 72, 153, 0.2) 0%,
-            transparent 70%
-          );
-          animation-delay: 1s;
-        }
-        
-        @keyframes neon-flicker {
-          0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-            text-shadow: 
-              0 0 5px rgba(56, 182, 255, 0.8),
-              0 0 15px rgba(56, 182, 255, 0.6),
-              0 0 30px rgba(56, 182, 255, 0.4),
-              0 0 60px rgba(138, 99, 210, 0.3);
-          }
-          20%, 24%, 55% {
-            text-shadow: 
-              0 0 10px rgba(56, 182, 255, 1),
-              0 0 20px rgba(56, 182, 255, 0.8),
-              0 0 40px rgba(56, 182, 255, 0.6),
-              0 0 80px rgba(138, 99, 210, 0.5);
-          }
-        }
-        
-        @keyframes energy-pulse {
-          0%, 100% { opacity: 0.2; transform: scale(0.8); }
-          50% { opacity: 0.5; transform: scale(1.2); }
-        }
-
-        /* Nuevos estilos para elementos 3D */
-        .torus-metal {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          transform-style: preserve-3d;
-          animation: rotate-3d 12s infinite linear;
-        }
-        
-        .torus-metal-ring {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          border: 4px solid transparent;
-          border-top-color: rgba(56, 182, 255, 0.8);
-          border-bottom-color: rgba(138, 99, 210, 0.8);
-          border-radius: 50%;
-          box-shadow: 
-            0 0 20px rgba(56, 182, 255, 0.3),
-            0 0 40px rgba(138, 99, 210, 0.2);
-          animation: metal-glow 3s infinite alternate;
-        }
-        
-        .crystal-structure {
-          position: relative;
-          width: 80px;
-          height: 80px;
-          transform-style: preserve-3d;
-          animation: rotate-3d 16s infinite linear reverse;
-        }
-        
-        .crystal-beam {
-          position: absolute;
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(5px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-          transform-origin: center;
-        }
-        
-        .beam-1 {
-          width: 100%;
-          height: 4px;
-          top: 50%;
-          transform: translateY(-50%) rotateX(90deg);
-        }
-        
-        .beam-2 {
-          width: 4px;
-          height: 100%;
-          left: 50%;
-          transform: translateX(-50%) rotateY(90deg);
-        }
-        
-        .beam-3 {
-          width: 4px;
-          height: 100%;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%) rotateX(45deg) rotateY(45deg);
-        }
-        
-        .crystal-core {
-          position: absolute;
-          width: 16px;
-          height: 16px;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: radial-gradient(
-            circle at center,
-            rgba(255, 255, 255, 0.8) 0%,
-            rgba(56, 182, 255, 0.6) 70%,
-            transparent 100%
-          );
-          border-radius: 50%;
-          box-shadow: 0 0 30px rgba(56, 182, 255, 0.6);
-          animation: core-pulse 3s infinite alternate;
-        }
-        
-        @keyframes rotate-3d {
-          0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-          100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
-        }
-        
-        @keyframes metal-glow {
-          0% { 
-            border-top-color: rgba(56, 182, 255, 0.8);
-            border-bottom-color: rgba(138, 99, 210, 0.8);
-          }
-          50% { 
-            border-top-color: rgba(138, 99, 210, 0.8);
-            border-bottom-color: rgba(56, 182, 255, 0.8);
-          }
-          100% { 
-            border-top-color: rgba(56, 182, 255, 0.8);
-            border-bottom-color: rgba(138, 99, 210, 0.8);
-          }
-        }
-        
-        @keyframes core-pulse {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
-          100% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-        }
-        
-        @keyframes float-1 {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        
-        @keyframes float-2 {
-          0%, 100% { transform: translateY(0px) rotateZ(0deg); }
-          50% { transform: translateY(-30px) rotateZ(180deg); }
-        }
-        
-        @keyframes float-3 {
-          0%, 100% { transform: translateY(0px) scale(1); }
-          50% { transform: translateY(-25px) scale(1.1); }
-        }
-        
-        @keyframes float-4 {
-          0%, 100% { transform: translateY(0) translateX(0); }
-          50% { transform: translateY(-20px) translateX(10px); }
-        }
-        
-        @keyframes float-5 {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-15px) rotate(10deg); }
-        }
-        
-        @keyframes float-6 {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-10px) scale(1.05); }
-        }
-
-        /* 3D Geometric Shapes */
-        .geometric-cube {
-          width: 60px;
-          height: 60px;
-          perspective: 200px;
-          opacity: 0.7;
-        }
-
-        .cube {
-          position: relative;
-          transform-style: preserve-3d;
-          animation: rotate-cube 12s linear infinite;
-        }
-
-        .face {
-          position: absolute;
-          width: 60px;
-          height: 60px;
-          border: 2px solid rgba(56, 182, 255, 0.5);
-          background: rgba(56, 182, 255, 0.1);
-          backdrop-filter: blur(10px);
-        }
-
-        .face.front { transform: rotateY(0deg) translateZ(30px); }
-        .face.back { transform: rotateY(180deg) translateZ(30px); }
-        .face.right { transform: rotateY(90deg) translateZ(30px); }
-        .face.left { transform: rotateY(-90deg) translateZ(30px); }
-        .face.top { transform: rotateX(90deg) translateZ(30px); }
-        .face.bottom { transform: rotateX(-90deg) translateZ(30px); }
-
-        @keyframes rotate-cube {
-          0% { transform: rotateX(0deg) rotateY(0deg); }
-          100% { transform: rotateX(360deg) rotateY(360deg); }
-        }
-
-        .animate-float-1 { animation: float-1 6s ease-in-out infinite; }
-        .animate-float-2 { animation: float-2 8s ease-in-out infinite; }
-        .animate-float-3 { animation: float-3 7s ease-in-out infinite; }
-        .animate-float-4 { animation: float-4 5s ease-in-out infinite; }
-        .animate-float-5 { animation: float-5 6s ease-in-out infinite; }
-        .animate-float-6 { animation: float-6 4s ease-in-out infinite; }
-
-        /* Pyramid */
-        .geometric-pyramid {
-          width: 80px;
-          height: 80px;
-          perspective: 300px;
-          opacity: 0.6;
-        }
-
-        .pyramid {
-          position: relative;
-          transform-style: preserve-3d;
-          animation: rotate-pyramid 15s linear infinite;
-        }
-
-        .pyramid-face {
-          position: absolute;
-          border: 2px solid rgba(138, 99, 210, 0.6);
-          background: rgba(138, 99, 210, 0.15);
-          backdrop-filter: blur(8px);
-        }
-
-        .pyramid-front {
-          width: 0;
-          height: 0;
-          border-left: 40px solid transparent;
-          border-right: 40px solid transparent;
-          border-bottom: 60px solid rgba(138, 99, 210, 0.2);
-          transform: translateZ(20px);
-        }
-
-        .pyramid-right {
-          width: 0;
-          height: 0;
-          border-left: 40px solid transparent;
-          border-right: 40px solid transparent;
-          border-bottom: 60px solid rgba(138, 99, 210, 0.2);
-          transform: rotateY(90deg) translateZ(20px);
-        }
-
-        .pyramid-back {
-          width: 0;
-          height: 0;
-          border-left: 40px solid transparent;
-          border-right: 40px solid transparent;
-          border-bottom: 60px solid rgba(138, 99, 210, 0.2);
-          transform: rotateY(180deg) translateZ(20px);
-        }
-
-        .pyramid-left {
-          width: 0;
-          height: 0;
-          border-left: 40px solid transparent;
-          border-right: 40px solid transparent;
-          border-bottom: 60px solid rgba(138, 99, 210, 0.2);
-          transform: rotateY(-90deg) translateZ(20px);
-        }
-
-        @keyframes rotate-pyramid {
-          0% { transform: rotateX(0deg) rotateY(0deg); }
-          100% { transform: rotateX(360deg) rotateY(360deg); }
-        }
-
-        /* Octahedron */
-        .geometric-octahedron {
-          width: 70px;
-          height: 70px;
-          perspective: 250px;
-          opacity: 0.65;
-        }
-
-        .octahedron {
-          position: relative;
-          transform-style: preserve-3d;
-          animation: rotate-octahedron 10s linear infinite;
-        }
-
-        .oct-face {
-          position: absolute;
-          width: 0;
-          height: 0;
-          border-left: 25px solid transparent;
-          border-right: 25px solid transparent;
-          border-bottom: 35px solid rgba(236, 72, 153, 0.2);
-          border: 1px solid rgba(236, 72, 153, 0.5);
-        }
-
-        .oct-1 { transform: rotateY(0deg) translateZ(25px); }
-        .oct-2 { transform: rotateY(90deg) translateZ(25px); }
-        .oct-3 { transform: rotateY(180deg) translateZ(25px); }
-        .oct-4 { transform: rotateY(270deg) translateZ(25px); }
-        .oct-5 { transform: rotateX(180deg) rotateY(0deg) translateZ(25px); }
-        .oct-6 { transform: rotateX(180deg) rotateY(90deg) translateZ(25px); }
-        .oct-7 { transform: rotateX(180deg) rotateY(180deg) translateZ(25px); }
-        .oct-8 { transform: rotateX(180deg) rotateY(270deg) translateZ(25px); }
-
-        @keyframes rotate-octahedron {
-          0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-          100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
-        }
-
-        /* Torus Ring */
-        .torus-ring {
-          width: 100px;
-          height: 100px;
-          perspective: 300px;
-          opacity: 0.7;
-        }
-
-        .torus-outer {
-          position: relative;
-          width: 100px;
-          height: 100px;
-          border: 6px solid rgba(59, 130, 246, 0.4);
-          border-radius: 50%;
-          transform-style: preserve-3d;
-          background: conic-gradient(
-            from 0deg, 
-            rgba(59, 130, 246, 0.1) 0deg,
-            rgba(16, 185, 129, 0.1) 90deg,
-            rgba(236, 72, 153, 0.1) 180deg,
-            rgba(245, 158, 11, 0.1) 270deg,
-            rgba(59, 130, 246, 0.1) 360deg
-          );
-          box-shadow: 
-            inset 0 0 20px rgba(59, 130, 246, 0.3),
-            0 0 30px rgba(59, 130, 246, 0.2);
-        }
-
-        .torus-inner {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 40px;
-          height: 40px;
-          border: 3px solid rgba(16, 185, 129, 0.6);
-          border-radius: 50%;
-          background: rgba(16, 185, 129, 0.1);
-          box-shadow: 
-            inset 0 0 10px rgba(16, 185, 129, 0.4),
-            0 0 20px rgba(16, 185, 129, 0.3);
-        }
-
-        @keyframes spin-y {
-          0% { transform: rotateY(0deg) rotateX(15deg); }
-          100% { transform: rotateY(360deg) rotateX(15deg); }
-        }
-        .animate-spin-y { animation: spin-y 8s linear infinite; }
-
-        /* DNA Helix */
-        .dna-helix {
-          width: 60px;
-          height: 120px;
-          position: relative;
-          opacity: 0.8;
-        }
-
-        .helix-strand {
-          position: absolute;
-          width: 4px;
-          height: 120px;
-          background: linear-gradient(
-            to bottom,
-            rgba(245, 158, 11, 0.8) 0%,
-            rgba(236, 72, 153, 0.8) 25%,
-            rgba(139, 92, 246, 0.8) 50%,
-            rgba(59, 130, 246, 0.8) 75%,
-            rgba(16, 185, 129, 0.8) 100%
-          );
-          border-radius: 2px;
-          box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-        }
-
-        .helix-1 {
-          left: 28px;
-          transform-origin: center;
-        }
-
-        .helix-2 {
-          right: 28px;
-          transform-origin: center;
-        }
-
-        @keyframes helix-rotate {
-          0% { transform: rotateY(0deg) rotateZ(0deg); }
-          100% { transform: rotateY(360deg) rotateZ(360deg); }
-        }
-
-        @keyframes helix-rotate-reverse {
-          0% { transform: rotateY(0deg) rotateZ(0deg); }
-          100% { transform: rotateY(-360deg) rotateZ(-360deg); }
-        }
-
-        .animate-helix-rotate { animation: helix-rotate 6s linear infinite; }
-        .animate-helix-rotate-reverse { animation: helix-rotate-reverse 6s linear infinite; }
-
-        /* Cursor Styles */
-        ${isClient ? `
         * {
           cursor: none !important;
         }
-        
-        a, button, [role="button"] {
-          cursor: none !important;
-        }
-        ` : ''}
       `}</style>
     </section>
   );
