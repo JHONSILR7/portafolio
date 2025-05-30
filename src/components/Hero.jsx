@@ -268,7 +268,7 @@ export default function Hero() {
               {/* Título mejorado y más destacado */}
               <div className="relative">
                 <p className="text-xl sm:text-2xl lg:text-3xl font-black bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent relative z-10">
-                  Estudiante de Ingeniería de Sistemas
+                  Estudiante en Ingeniería de Sistemas
                 </p>
                 
                 {/* Efectos de resplandor para el título */}
